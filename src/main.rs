@@ -6,25 +6,15 @@ use std::ffi::OsString;
 use std::fs::File;
 use std::process;
 
+type Record = (String, String, Option<u64>, f64, f64);
+
 fn run() -> Result<(), Box<dyn Error>> {
     let file_path = get_first_arg()?;
     let file = File::open(file_path)?;
     let mut rdr = csv::Reader::from_reader(file);
-    for result in rdr.records() {
-        let record = result?;
-        //println!("{:?}", record);
-
-        let city = &record[0];
-        let state = &record[1];
-        let pop: Option<u64> = record[2].parse().ok();
-        let latitude: f64 = record[3].parse()?;
-        let longitude: f64 = record[4].parse()?;
-
-        println!(
-            "city: {:?}, state: {:?}, \
-            pop: {:?}, latitude: {:?}, longitude: {:?}",
-            city, state, pop, latitude, longitude
-        );
+    for result in rdr.deserialize() {
+        let record: Record = result?;
+        println!("{:?}", record);
     }
     Ok(())
 }
