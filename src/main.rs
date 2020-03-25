@@ -1,29 +1,30 @@
 extern crate csv;
+extern crate serde;
 
-use std::env;
+#[macro_use]
+extern crate serde_derive;
+
 use std::error::Error;
-use std::ffi::OsString;
-use std::fs::File;
+use std::io;
 use std::process;
 
-type Record = (String, String, Option<u64>, f64, f64);
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+struct Record {
+    latitude: f64,
+    longitude: f64,
+    population: Option<u64>,
+    city: String,
+    state: String,
+}
 
 fn run() -> Result<(), Box<dyn Error>> {
-    let file_path = get_first_arg()?;
-    let file = File::open(file_path)?;
-    let mut rdr = csv::Reader::from_reader(file);
+    let mut rdr = csv::Reader::from_reader(io::stdin());
     for result in rdr.deserialize() {
         let record: Record = result?;
         println!("{:?}", record);
     }
     Ok(())
-}
-
-fn get_first_arg() -> Result<OsString, Box<dyn Error>> {
-    match env::args_os().nth(1) {
-        None => Err(From::from("expected 1 argument, but got none")),
-        Some(file_path) => Ok(file_path),
-    }
 }
 
 fn main() {
